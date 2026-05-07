@@ -350,7 +350,7 @@
             container.innerHTML += `
                 <div class="input-item">
                     <label>${cat.name}</label>
-                    <input type="number" id="input-${cat.id}" placeholder="0" min="0">
+                    <input type="number" id="input-${cat.id}" placeholder="0" min="0" step="any">
                 </div>
             `;
         });
@@ -378,7 +378,7 @@
             let currentData = {};
             
             categories.forEach(cat => {
-                currentData[cat.id] = parseInt(document.getElementById('input-' + cat.id).value) || 0;
+                currentData[cat.id] = parseFloat(document.getElementById('input-' + cat.id).value) || 0;
             });
 
             let existingEntryIndex = records.findIndex(r => r.date === date);
