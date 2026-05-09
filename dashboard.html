@@ -3,131 +3,321 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>สรุปความคืบหน้า</title>
-    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <title>Teacher Dashboard - สรุปความคืบหน้า</title>
+    <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Prompt', sans-serif; background: #F5F7F9; padding: 20px; color: #0F172A; }
-        .container { max-width: 800px; margin: 0 auto; }
-        h1 { text-align: center; color: #0F766E; margin-bottom: 30px; }
-        
-        .student-card {
-            background: white;
-            padding: 24px;
-            border-radius: 20px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-            margin-bottom: 20px;
+        :root {
+            --bg-page: #F8FAFC;
+            --bg-card: #FFFFFF;
+            --brand-primary: #0D9488;
+            --text-heading: #1E293B;
+            --text-body: #64748B;
+            --border-color: #E2E8F0;
         }
-        .student-name {
-            font-size: 20px;
-            font-weight: 600;
-            color: #0F172A;
-            margin-bottom: 16px;
-            padding-bottom: 12px;
-            border-bottom: 2px solid #E2E8F0;
+
+        body {
+            font-family: 'Google Sans', sans-serif;
+            background-color: var(--bg-page);
+            color: var(--text-heading);
+            margin: 0;
+            padding: 20px;
         }
-        .score-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-            gap: 16px;
+
+        .header {
+            max-width: 800px;
+            margin: 0 auto 24px auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
-        .score-item {
-            background: #F0FDFB;
-            padding: 16px;
-            border-radius: 12px;
-            text-align: center;
-            border: 1px solid rgba(15, 118, 110, 0.1);
-        }
-        .score-label {
-            font-size: 13px;
-            color: #475569;
-            font-weight: 500;
-            margin-bottom: 8px;
-        }
-        .score-value {
+
+        .title-group h1 {
+            margin: 0;
             font-size: 24px;
-            font-weight: 600;
-            color: #0F766E;
+            color: var(--brand-primary);
         }
-        .loading { text-align: center; color: #94A3B8; margin-top: 50px; }
+
+        .title-group p {
+            margin: 4px 0 0 0;
+            color: var(--text-body);
+            font-size: 14px;
+        }
+
+        .btn-refresh {
+            background: var(--brand-primary);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: opacity 0.2s;
+        }
+
+        .btn-refresh:hover { opacity: 0.9; }
+
+        .card {
+            background: var(--bg-card);
+            border-radius: 16px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+            border: 1px solid var(--border-color);
+            max-width: 800px;
+            margin: 0 auto;
+            overflow: hidden;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 14px;
+        }
+
+        th {
+            background: #F1F5F9;
+            padding: 16px;
+            color: var(--text-heading);
+            font-weight: 600;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        td {
+            padding: 16px;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-heading);
+        }
+
+        tr:hover { background: #F8FAFC; }
+
+        .student-name { font-weight: 700; }
+        .total-r { font-weight: 700; color: var(--brand-primary); font-size: 16px; }
+        .last-update { font-size: 12px; color: #94A3B8; }
+
+        .btn-detail {
+            background: #E0F2FE;
+            color: #0284C7;
+            border: none;
+            padding: 6px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 13px;
+            transition: background 0.2s;
+        }
+
+        .btn-detail:hover { background: #BAE6FD; }
+
+        .loading-state { padding: 40px; text-align: center; color: var(--text-body); }
+
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(4px);
+            display: none; justify-content: center; align-items: center;
+            z-index: 1000;
+            opacity: 0; transition: opacity 0.3s;
+        }
+
+        .modal-overlay.show { display: flex; opacity: 1; }
+
+        .modal-box {
+            background: white;
+            width: 90%; max-width: 450px;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);
+            transform: translateY(20px); transition: transform 0.3s;
+            max-height: 80vh; overflow-y: auto;
+        }
+
+        .modal-overlay.show .modal-box { transform: translateY(0); }
+
+        .modal-header {
+            display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 12px; margin-bottom: 16px;
+        }
+
+        .modal-title { font-size: 18px; font-weight: 700; color: var(--text-heading); }
+        
+        .btn-close {
+            background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-body);
+        }
+
+        .detail-grid {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+        }
+
+        .detail-item {
+            background: #F8FAFC; padding: 12px; border-radius: 8px;
+            display: flex; justify-content: space-between; align-items: center;
+            border: 1px solid var(--border-color);
+        }
+
+        .detail-label { font-size: 13px; color: var(--text-body); font-weight: 500; }
+        .detail-value { font-size: 16px; color: var(--text-heading); font-weight: 700; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h1>📊 สรุปความคืบหน้า</h1>
-    <div id="loading" class="loading">กำลังประมวลผลคะแนนรวม...</div>
-    <div id="dashboardContent"></div>
-</div>
+    <div class="header">
+        <div class="title-group">
+            <h1>Teacher Dashboard</h1>
+            <p>ติดตามความคืบหน้าของนักศึกษา</p>
+        </div>
+        <button class="btn-refresh" onclick="loadAllData()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
+            อัปเดตข้อมูล
+        </button>
+    </div>
 
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-  import { getFirestore, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    <div class="card">
+        <table>
+            <thead>
+                <tr>
+                    <th>ชื่อนักศึกษา</th>
+                    <th>ยอดรวมหัตถการ (Total R)</th>
+                    <th>อัปเดตล่าสุด</th>
+                    <th>ดูเพิ่มเติม</th>
+                </tr>
+            </thead>
+            <tbody id="dashboard-body">
+                <tr>
+                    <td colspan="4" class="loading-state">กำลังดึงข้อมูลจาก Cloud...</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyC0f7Es0GBGjCbjRJD4drO8urAGdRvSMX4",
-    authDomain: "dental-tracker-db.firebaseapp.com",
-    projectId: "dental-tracker-db",
-    storageBucket: "dental-tracker-db.firebasestorage.app",
-    messagingSenderId: "696925089677",
-    appId: "1:696925089677:web:f8b661f17f438a075597c4"
-  };
+    <div class="modal-overlay" id="detailModal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <div class="modal-title" id="modal-student-name">ชื่อนักศึกษา</div>
+                <button class="btn-close" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="detail-grid" id="modal-details-grid">
+                </div>
+        </div>
+    </div>
 
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-  // ดึงข้อมูลและคำนวณยอดรวม
-  onSnapshot(collection(db, "dental_cases"), (snapshot) => {
-      document.getElementById('loading').style.display = 'none';
-      const dashboard = document.getElementById('dashboardContent');
-      dashboard.innerHTML = ''; 
+        const firebaseConfig = {
+            apiKey: "AIzaSyC0f7Es0GBGjCbjRJD4drO8urAGdRvSMX4",
+            authDomain: "dental-tracker-db.firebaseapp.com",
+            projectId: "dental-tracker-db",
+            storageBucket: "dental-tracker-db.firebasestorage.app",
+            messagingSenderId: "696925089677",
+            appId: "1:696925089677:web:f8b661f17f438a075597c4"
+        };
 
-      // สร้างกล่องเก็บคะแนนรวมของแต่ละคน
-      const studentTotals = {};
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
 
-      snapshot.forEach((doc) => {
-          const data = doc.data();
-          const name = data.studentName || 'ไม่ระบุชื่อ';
-          
-          if (!studentTotals[name]) {
-              studentTotals[name] = {};
-          }
-          
-          // บวกเลขยอดเคสเข้าด้วยกัน
-          for (const [category, amount] of Object.entries(data.cases || {})) {
-              // แปลงเป็นตัวเลขก่อนบวก เผื่อเป็นทศนิยม
-              const numAmount = parseFloat(amount) || 0;
-              studentTotals[name][category] = (studentTotals[name][category] || 0) + numAmount;
-          }
-      });
+        // ตัวแปรสำหรับเก็บข้อมูลนักศึกษาทั้งหมดไว้ในหน่วยความจำ เพื่อไว้เปิดดูใน Modal
+        window.studentDataMap = {};
 
-      // สร้างหน้าตาการ์ดสรุปให้แต่ละคน
-      for (const [studentName, scores] of Object.entries(studentTotals)) {
-          const card = document.createElement('div');
-          card.className = 'student-card';
-          
-          let scoresHTML = '';
-          for (const [category, total] of Object.entries(scores)) {
-              if (total > 0) {
-                  scoresHTML += `
-                      <div class="score-item">
-                          <div class="score-label">${category}</div>
-                          <div class="score-value">${total}</div>
-                      </div>
-                  `;
-              }
-          }
+        const categories = [
+            { id: 'complete', name: 'Complete Chart' },
+            { id: 'xray', name: 'X-ray' },
+            { id: 'class1', name: 'Class I / PRR' },
+            { id: 'class2', name: 'Class II' },
+            { id: 'class3', name: 'Class III/IV' },
+            { id: 'class5', name: 'Class V' },
+            { id: 'scaling', name: 'Scaling' },
+            { id: 'sealant', name: 'Sealant' },
+            { id: 'fluoride', name: 'Fluoride' },
+            { id: 'ohi', name: 'OHI' },
+            { id: 'caries', name: 'Caries Risk' },
+            { id: 'extract', name: 'Extraction' },
+            { id: 'other', name: 'Others' }
+        ];
 
-          card.innerHTML = `
-              <div class="student-name">👨‍⚕️ ${studentName}</div>
-              <div class="score-grid">
-                  ${scoresHTML || '<div style="color: #94A3B8; font-size: 14px;">ยังไม่มีข้อมูลความก้าวหน้า</div>'}
-              </div>
-          `;
-          
-          dashboard.appendChild(card);
-      }
-  });
-</script>
+        async function loadAllData() {
+            const tbody = document.getElementById('dashboard-body');
+            tbody.innerHTML = '<tr><td colspan="4" class="loading-state">กำลังโหลดข้อมูล...</td></tr>';
 
+            try {
+                const querySnapshot = await getDocs(collection(db, "dental_cases"));
+                if (querySnapshot.empty) {
+                    tbody.innerHTML = '<tr><td colspan="4" class="loading-state">ยังไม่มีข้อมูลนักศึกษาส่งเข้ามา</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = '';
+                window.studentDataMap = {}; // รีเซ็ตข้อมูลเก่า
+
+                querySnapshot.forEach((doc) => {
+                    const data = doc.data();
+                    const c = data.cases || {};
+                    const lastDate = data.lastUpdate ? new Date(data.lastUpdate).toLocaleString('th-TH') : '-';
+                    
+                    // คำนวณยอดรวมทั้งหมด (Total R)
+                    let totalR = Object.values(c).reduce((sum, val) => sum + (Number(val) || 0), 0);
+
+                    // เก็บข้อมูลเข้าหน่วยความจำเพื่อใช้เปิด Modal
+                    window.studentDataMap[data.studentName] = c;
+
+                    tbody.innerHTML += `
+                        <tr>
+                            <td class="student-name">${data.studentName}</td>
+                            <td class="total-r">${totalR} งาน</td>
+                            <td class="last-update">${lastDate}</td>
+                            <td><button class="btn-detail" onclick="openModal('${data.studentName}')">ดูเพิ่มเติม</button></td>
+                        </tr>
+                    `;
+                });
+            } catch (e) {
+                console.error("Error loading data: ", e);
+                tbody.innerHTML = '<tr><td colspan="4" class="loading-state">เกิดข้อผิดพลาดในการเชื่อมต่อฐานข้อมูล</td></tr>';
+            }
+        }
+
+        window.openModal = function(studentName) {
+            const data = window.studentDataMap[studentName];
+            if(!data) return;
+
+            document.getElementById('modal-student-name').innerText = "รายละเอียด: " + studentName;
+            
+            const grid = document.getElementById('modal-details-grid');
+            grid.innerHTML = '';
+
+            categories.forEach(cat => {
+                const value = data[cat.id] || 0;
+                // เน้นสีเขียวถ้ามีงาน, สีเทาถ้าเป็น 0
+                const colorStyle = value > 0 ? 'color: var(--brand-primary);' : 'color: var(--text-body); opacity: 0.5;';
+                
+                grid.innerHTML += `
+                    <div class="detail-item">
+                        <span class="detail-label">${cat.name}</span>
+                        <span class="detail-value" style="${colorStyle}">${value}</span>
+                    </div>
+                `;
+            });
+
+            document.getElementById('detailModal').classList.add('show');
+        }
+
+        window.closeModal = function() {
+            document.getElementById('detailModal').classList.remove('show');
+        }
+
+        // ปิด Modal เมื่อคลิกพื้นที่ว่างด้านนอก
+        window.onclick = function(event) {
+            const modal = document.getElementById('detailModal');
+            if (event.target === modal) {
+                closeModal();
+            }
+        }
+
+        loadAllData();
+        window.loadAllData = loadAllData;
+    </script>
 </body>
 </html>
