@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>สรุปความคืบหน้า</title>
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Prompt', sans-serif; background: #F5F7F9; padding: 20px; color: #0F172A; }
+        .container { max-width: 800px; margin: 0 auto; }
+        h1 { text-align: center; color: #0F766E; margin-bottom: 30px; }
+        
+        .student-card {
+            background: white;
+            padding: 24px;
+            border-radius: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+        }
+        .student-name {
+            font-size: 20px;
+            font-weight: 600;
+            color: #0F172A;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid #E2E8F0;
+        }
+        .score-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 16px;
+        }
+        .score-item {
+            background: #F0FDFB;
+            padding: 16px;
+            border-radius: 12px;
+            text-align: center;
+            border: 1px solid rgba(15, 118, 110, 0.1);
+        }
+        .score-label {
+            font-size: 13px;
+            color: #475569;
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+        .score-value {
+            font-size: 24px;
+            font-weight: 600;
+            color: #0F766E;
+        }
+        .loading { text-align: center; color: #94A3B8; margin-top: 50px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>📊 สรุปความคืบหน้า</h1>
+    <div id="loading" class="loading">กำลังประมวลผลคะแนนรวม...</div>
+    <div id="dashboardContent"></div>
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+  import { getFirestore, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyC0f7Es0GBGjCbjRJD4drO8urAGdRvSMX4",
+    authDomain: "dental-tracker-db.firebaseapp.com",
+    projectId: "dental-tracker-db",
+    storageBucket: "dental-tracker-db.firebasestorage.app",
+    messagingSenderId: "696925089677",
+    appId: "1:696925089677:web:f8b661f17f438a075597c4"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  // ดึงข้อมูลและคำนวณยอดรวม
+  onSnapshot(collection(db, "dental_cases"), (snapshot) => {
+      document.getElementById('loading').style.display = 'none';
+      const dashboard = document.getElementById('dashboardContent');
+      dashboard.innerHTML = ''; 
+
+      // สร้างกล่องเก็บคะแนนรวมของแต่ละคน
+      const studentTotals = {};
+
+      snapshot.forEach((doc) => {
+          const data = doc.data();
+          const name = data.studentName || 'ไม่ระบุชื่อ';
+          
+          if (!studentTotals[name]) {
+              studentTotals[name] = {};
+          }
+          
+          // บวกเลขยอดเคสเข้าด้วยกัน
+          for (const [category, amount] of Object.entries(data.cases || {})) {
+              // แปลงเป็นตัวเลขก่อนบวก เผื่อเป็นทศนิยม
+              const numAmount = parseFloat(amount) || 0;
+              studentTotals[name][category] = (studentTotals[name][category] || 0) + numAmount;
+          }
+      });
+
+      // สร้างหน้าตาการ์ดสรุปให้แต่ละคน
+      for (const [studentName, scores] of Object.entries(studentTotals)) {
+          const card = document.createElement('div');
+          card.className = 'student-card';
+          
+          let scoresHTML = '';
+          for (const [category, total] of Object.entries(scores)) {
+              if (total > 0) {
+                  scoresHTML += `
+                      <div class="score-item">
+                          <div class="score-label">${category}</div>
+                          <div class="score-value">${total}</div>
+                      </div>
+                  `;
+              }
+          }
+
+          card.innerHTML = `
+              <div class="student-name">👨‍⚕️ ${studentName}</div>
+              <div class="score-grid">
+                  ${scoresHTML || '<div style="color: #94A3B8; font-size: 14px;">ยังไม่มีข้อมูลความก้าวหน้า</div>'}
+              </div>
+          `;
+          
+          dashboard.appendChild(card);
+      }
+  });
+</script>
+
+</body>
+</html>
