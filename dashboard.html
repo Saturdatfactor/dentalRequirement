@@ -180,7 +180,7 @@
             <thead>
                 <tr>
                     <th>ชื่อนักศึกษา</th>
-                    <th>ยอดรวมหัตถการ (Total R)</th>
+                    <th>ยอด Requirement</th>
                     <th>อัปเดตล่าสุด</th>
                     <th>ดูเพิ่มเติม</th>
                 </tr>
@@ -267,7 +267,7 @@
                     tbody.innerHTML += `
                         <tr>
                             <td class="student-name">${data.studentName}</td>
-                            <td class="total-r">${totalR} งาน</td>
+                            <td class="total-r">${totalR} Requirement</td>
                             <td class="last-update">${lastDate}</td>
                             <td><button class="btn-detail" onclick="openModal('${data.studentName}')">ดูเพิ่มเติม</button></td>
                         </tr>
