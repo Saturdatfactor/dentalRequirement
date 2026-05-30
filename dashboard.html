@@ -1,323 +1,747 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0F766E">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Teacher Dashboard - สรุปความคืบหน้า</title>
-    <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Dental Requirement Tracker</title>
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600&display=swap" rel="stylesheet">
+    
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
     <style>
         :root {
-            --bg-page: #F8FAFC;
+            --bg-body: #F5F7F9;
             --bg-card: #FFFFFF;
-            --brand-primary: #0D9488;
-            --text-heading: #1E293B;
-            --text-body: #64748B;
-            --border-color: #E2E8F0;
+            --brand-primary: #0F766E;   /* Deep Teal */
+            --brand-light: #F0FDFB;
+            --brand-hover: #115E59;
+            --text-heading: #0F172A;    /* Slate 900 */
+            --text-body: #475569;       /* Slate 600 */
+            --text-muted: #94A3B8;      /* Slate 400 */
+            --border-soft: #E2E8F0;
+            --danger: #E11D48;
+            --success: #10B981;
+            
+            --shadow-sm: 0 2px 8px rgba(15, 23, 42, 0.04);
+            --shadow-md: 0 12px 32px rgba(15, 23, 42, 0.06);
+            --shadow-nav: 0 20px 40px rgba(15, 23, 42, 0.12);
+            --nav-bg: rgba(255, 255, 255, 0.85);
+            --input-focus-ring: 0 0 0 4px var(--brand-light);
         }
 
-        body {
-            font-family: 'Google Sans', sans-serif;
-            background-color: var(--bg-page);
-            color: var(--text-heading);
-            margin: 0;
-            padding: 20px;
+        body.dark-theme {
+            --bg-body: #0B1120;                     
+            --bg-card: #1E293B;         
+            --brand-primary: #2DD4BF;   
+            --brand-light: rgba(45, 212, 191, 0.15);
+            --text-heading: #F8FAFC;   
+            --text-body: #CBD5E1;      
+            --text-muted: #64748B;      
+            --border-soft: #334155;     
+            
+            --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.4);
+            --shadow-md: 0 12px 32px rgba(0, 0, 0, 0.5);
+            --shadow-nav: 0 10px 40px rgba(0, 0, 0, 0.8);
+            --nav-bg: rgba(30, 41, 59, 0.85);
+            --input-focus-ring: 0 0 0 2px var(--brand-primary);
         }
 
-        .header {
-            max-width: 800px;
-            margin: 0 auto 24px auto;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .title-group h1 {
-            margin: 0;
-            font-size: 24px;
-            color: var(--brand-primary);
-        }
-
-        .title-group p {
-            margin: 4px 0 0 0;
-            color: var(--text-body);
-            font-size: 14px;
-        }
-
-        .btn-refresh {
-            background: var(--brand-primary);
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 500;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            transition: opacity 0.2s;
-        }
-
-        .btn-refresh:hover { opacity: 0.9; }
-
-        .card {
-            background: var(--bg-card);
-            border-radius: 16px;
-            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
-            border: 1px solid var(--border-color);
-            max-width: 800px;
-            margin: 0 auto;
-            overflow: hidden;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            text-align: left;
-            font-size: 14px;
-        }
-
-        th {
-            background: #F1F5F9;
-            padding: 16px;
-            color: var(--text-heading);
-            font-weight: 600;
-            border-bottom: 2px solid var(--border-color);
-        }
-
-        td {
-            padding: 16px;
-            border-bottom: 1px solid var(--border-color);
-            color: var(--text-heading);
-        }
-
-        tr:hover { background: #F8FAFC; }
-
-        .student-name { font-weight: 700; }
-        .total-r { font-weight: 700; color: var(--brand-primary); font-size: 16px; }
-        .last-update { font-size: 12px; color: #94A3B8; }
-
-        .btn-detail {
-            background: #E0F2FE;
-            color: #0284C7;
-            border: none;
-            padding: 6px 16px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: 600;
-            font-size: 13px;
-            transition: background 0.2s;
-        }
-
-        .btn-detail:hover { background: #BAE6FD; }
-
-        .loading-state { padding: 40px; text-align: center; color: var(--text-body); }
-
-        /* Modal Styles */
-        .modal-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(15, 23, 42, 0.6);
-            backdrop-filter: blur(4px);
-            display: none; justify-content: center; align-items: center;
-            z-index: 1000;
-            opacity: 0; transition: opacity 0.3s;
-        }
-
-        .modal-overlay.show { display: flex; opacity: 1; }
-
-        .modal-box {
-            background: white;
-            width: 90%; max-width: 450px;
-            border-radius: 16px;
-            padding: 24px;
-            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);
-            transform: translateY(20px); transition: transform 0.3s;
-            max-height: 80vh; overflow-y: auto;
-        }
-
-        .modal-overlay.show .modal-box { transform: translateY(0); }
-
-        .modal-header {
-            display: flex; justify-content: space-between; align-items: center;
-            border-bottom: 1px solid var(--border-color);
-            padding-bottom: 12px; margin-bottom: 16px;
-        }
-
-        .modal-title { font-size: 18px; font-weight: 700; color: var(--text-heading); }
+        * { box-sizing: border-box; font-family: 'Prompt', sans-serif; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
         
-        .btn-close {
-            background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-body);
-        }
+        body { background-color: var(--bg-body); color: var(--text-body); font-weight: 300; padding-bottom: 120px; line-height: 1.5; transition: background-color 0.4s ease, color 0.4s ease; }
 
-        .detail-grid {
-            display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
-        }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--border-soft); border-radius: 10px; }
 
-        .detail-item {
-            background: #F8FAFC; padding: 12px; border-radius: 8px;
+        .bottom-nav { 
+            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+            background: var(--nav-bg); 
+            backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
             display: flex; justify-content: space-between; align-items: center;
-            border: 1px solid var(--border-color);
+            padding: 8px 12px; z-index: 100; border-radius: 100px;
+            box-shadow: var(--shadow-nav);
+            border: 1px solid rgba(255,255,255,0.05);
+            width: 90%; max-width: 360px;
+            transition: background 0.4s ease, border 0.4s ease;
         }
+        .nav-item { 
+            background: transparent; border: none; color: var(--text-muted); 
+            font-size: 11px; font-weight: 500; display: flex; flex-direction: column; 
+            align-items: center; justify-content: center; cursor: pointer; 
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            padding: 8px 16px; border-radius: 100px; width: 33.33%;
+        }
+        .nav-icon { width: 22px; height: 22px; margin-bottom: 4px; opacity: 0.7; transition: all 0.3s ease; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+        .nav-item.active { background: var(--brand-light); color: var(--brand-primary); }
+        .nav-item.active .nav-icon { opacity: 1; transform: scale(1.1); stroke-width: 2.5; }
+  
+        header { padding: 40px 24px 20px; max-width: 600px; margin: 0 auto; display: flex; justify-content: space-between; align-items: flex-end; }
+        .header-text h1 { font-size: 24px; font-weight: 600; color: var(--text-heading); letter-spacing: -0.5px; line-height: 1.2; transition: color 0.4s; }
+        .header-text p { font-size: 14px; color: var(--brand-primary); font-weight: 500; margin-top: 4px; transition: color 0.4s; }
+         
+        .theme-toggle-btn { 
+            width: 44px; height: 44px; border-radius: 50%; 
+            background: var(--bg-card); border: 1px solid var(--border-soft); 
+            color: var(--text-heading); display: flex; align-items: center; justify-content: center; 
+            cursor: pointer; transition: all 0.3s ease; box-shadow: var(--shadow-sm); 
+        }
+        .theme-toggle-btn:active { transform: scale(0.9); }
 
-        .detail-label { font-size: 13px; color: var(--text-body); font-weight: 500; }
-        .detail-value { font-size: 16px; color: var(--text-heading); font-weight: 700; }
+        .container { max-width: 600px; margin: 0 auto; padding: 0 20px; }
+        .page { display: none; animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1); }
+        .page.active { display: block; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        .card { background: var(--bg-card); border-radius: 24px; padding: 32px 24px; box-shadow: var(--shadow-md); margin-bottom: 24px; transition: background 0.4s ease, box-shadow 0.4s ease; }
+        .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+        .form-title { font-size: 18px; font-weight: 600; color: var(--text-heading); transition: color 0.4s; }
+        .badge { background: var(--brand-light); color: var(--brand-primary); font-size: 12px; padding: 4px 10px; border-radius: 100px; font-weight: 500; transition: all 0.4s; }
+
+        .form-group { margin-bottom: 20px; }
+        .form-group label { font-weight: 500; color: var(--text-body); font-size: 13px; margin-bottom: 8px; display: block; transition: color 0.4s; }
+        
+        #dateInput { width: 100%; padding: 16px 20px; border-radius: 16px; border: 1.5px solid var(--border-soft); font-size: 15px; font-weight: 500; color: var(--text-heading); outline: none; transition: all 0.3s ease; background: var(--bg-body); color-scheme: light dark; }
+        #dateInput:focus { border-color: var(--brand-primary); box-shadow: var(--input-focus-ring); }
+
+        .input-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 10px; }
+        .input-item { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-radius: 16px; border: 1.5px solid var(--border-soft); background: var(--bg-body); transition: all 0.3s ease; }
+        .input-item:focus-within { border-color: var(--brand-primary); box-shadow: var(--input-focus-ring); transform: translateY(-1px); }
+        .input-item label { font-size: 13px; font-weight: 500; color: var(--text-body); margin: 0; transition: color 0.4s; }
+        .input-item input { border: none; background: transparent; font-size: 18px; font-weight: 600; color: var(--text-heading); outline: none; width: 50px; text-align: right; padding: 0; transition: color 0.4s; }
+
+        .btn-save { width: 100%; padding: 18px; background: var(--text-heading); color: var(--bg-card); border: none; border-radius: 100px; font-size: 15px; font-weight: 600; cursor: pointer; margin-top: 16px; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); }
+        .btn-save:hover { transform: translateY(-2px); box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2); }
+        .btn-save:active { transform: scale(0.98); }
+        .btn-cancel { width: 100%; padding: 16px; background: transparent; color: var(--text-muted); border: none; font-size: 14px; font-weight: 500; cursor: pointer; margin-top: 4px; display: none; }
+        .btn-cancel:hover { color: var(--text-heading); }
+
+        .table-wrapper { overflow-x: auto; background: var(--bg-card); border-radius: 16px; margin: 0 -10px; padding: 0 10px; transition: background 0.4s ease; }
+        .spreadsheet { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 13px; white-space: nowrap; }
+        .spreadsheet th, .spreadsheet td { padding: 16px; text-align: center; border-bottom: 1px solid var(--border-soft); transition: border-color 0.4s; }
+        .spreadsheet th { color: var(--text-muted); font-weight: 500; font-size: 12px; letter-spacing: 0.5px; position: sticky; top: 0; background: var(--bg-card); z-index: 2; transition: color 0.4s, background 0.4s; }
+        
+        .spreadsheet td:first-child { font-weight: 500; background: var(--bg-card); position: sticky; left: 0; z-index: 1; color: var(--text-heading); box-shadow: 4px 0 8px rgba(0,0,0,0.02); transition: background 0.4s, color 0.4s; }
+        .spreadsheet th:first-child { position: sticky; left: 0; z-index: 3; box-shadow: 4px 0 8px rgba(0,0,0,0.02); }
+        
+        .spreadsheet tbody tr { transition: background 0.2s; }
+        .spreadsheet tbody tr:hover { background: var(--bg-body); }
+        
+        .action-cell { display: flex; gap: 8px; justify-content: center; align-items: center; height: 100%; }
+        .action-btn { background: var(--bg-body); border: none; width: 32px; height: 32px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--text-body); transition: 0.2s; }
+        .action-btn:hover { background: var(--border-soft); color: var(--text-heading); }
+        .action-btn.delete:hover { background: rgba(225, 29, 72, 0.1); color: var(--danger); }
+
+        .summary-item { margin-bottom: 24px; }
+        .summary-label { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 10px; }
+        .summary-label .title { font-weight: 500; font-size: 14px; color: var(--text-heading); transition: color 0.4s; }
+        .summary-label .stats { font-size: 13px; color: var(--text-muted); transition: color 0.4s; }
+        .summary-label .stats span { color: var(--text-heading); font-weight: 600; font-size: 15px; }
+        
+        .progress-container { height: 10px; background: var(--bg-body); border-radius: 10px; overflow: hidden; position: relative; transition: background 0.4s; }
+        .progress-bar { height: 100%; background: var(--brand-primary); border-radius: 10px; transition: width 1s cubic-bezier(0.16, 1, 0.3, 1), background 0.4s; position: relative; overflow: hidden; }
+        .progress-bar::after { content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent); transform: translateX(-100%); animation: shimmer-bar 2s infinite; }
+        @keyframes shimmer-bar { 100% { transform: translateX(100%); } }
+        
+        .completed .progress-bar { background: var(--success); }
+        .completed .title { color: var(--success); }
+
+        .total-card { 
+            background: linear-gradient(135deg, #0F172A, #334155); 
+            color: white; padding: 32px; border-radius: 24px; text-align: center; 
+            margin-top: 32px; box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15); 
+            position: relative; overflow: hidden; 
+        }
+        body.dark-theme .total-card {
+            background: linear-gradient(135deg, #0B1120, #020617);
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+        .total-card::before { content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 60%); pointer-events: none; }
+        .total-card h3 { margin: 0 0 8px 0; font-size: 13px; color: #94A3B8; font-weight: 500; text-transform: uppercase; letter-spacing: 1px; }
+        .total-card .total-number { font-size: 48px; font-weight: 300; color: #FFF; margin: 0; line-height: 1; }
+        .total-card .total-sub { font-size: 14px; color: #CBD5E1; margin-top: 12px; font-weight: 400; background: rgba(255,255,255,0.1); display: inline-block; padding: 6px 16px; border-radius: 100px; }
+
+        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(11, 17, 32, 0.6); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 2000; opacity: 0; pointer-events: none; transition: 0.3s ease; padding: 24px; }
+        .modal-overlay.show { opacity: 1; pointer-events: auto; }
+        .modal-box { background: var(--bg-card); width: 100%; max-width: 340px; border-radius: 24px; padding: 32px 24px; text-align: center; transform: scale(0.95); opacity: 0; transition: 0.3s cubic-bezier(0.16, 1, 0.3, 1); box-shadow: var(--shadow-nav); border: 1px solid var(--border-soft); }
+        .modal-overlay.show .modal-box { transform: scale(1); opacity: 1; }
+        .modal-icon { width: 48px; height: 48px; background: rgba(225, 29, 72, 0.1); color: var(--danger); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; font-size: 24px; }
+        .modal-title { font-size: 18px; font-weight: 600; color: var(--text-heading); margin-bottom: 8px; }
+        .modal-desc { color: var(--text-body); font-size: 14px; margin-bottom: 24px; line-height: 1.5; }
+        .modal-actions { display: flex; gap: 12px; }
+        .modal-btn { flex: 1; padding: 14px; border-radius: 100px; font-size: 14px; font-weight: 600; border: none; cursor: pointer; transition: 0.2s; }
+        .btn-modal-cancel { background: var(--bg-body); color: var(--text-heading); }
+        .btn-modal-cancel:hover { filter: brightness(0.9); }
+        .btn-modal-delete { background: var(--danger); color: white; }
+
+        #toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%) translateY(-20px); background: var(--text-heading); color: var(--bg-card); padding: 12px 24px; border-radius: 100px; font-size: 14px; font-weight: 500; opacity: 0; transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); z-index: 3000; pointer-events: none; box-shadow: var(--shadow-md); display: flex; align-items: center; gap: 8px; }
+        #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+        input[type="date"], 
+        input[type="number"], 
+        input[type="text"] {
+            width: 100%;
+            max-width: 100%;
+            box-sizing: border-box;
+            -webkit-appearance: none;
+            display: block;
+        }
     </style>
 </head>
 <body>
 
-    <div class="header">
-        <div class="title-group">
-            <h1>Teacher Dashboard</h1>
-            <p>ติดตามความคืบหน้าของนักศึกษา</p>
+    <header>
+        <div class="header-text">
+            <h1>Dental Requirement</h1>
+            <p id="current-date-display">Clinical Dashboard</p>
         </div>
-        <button class="btn-refresh" onclick="loadAllData()">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
-            อัปเดตข้อมูล
+        <button id="theme-toggle" class="theme-toggle-btn" onclick="toggleTheme()" aria-label="Toggle Dark Mode"></button>
+    </header>
+
+    <div id="toast"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg> <span id="toast-msg">บันทึกเรียบร้อย</span></div>
+
+    <div class="modal-overlay" id="deleteModal">
+        <div class="modal-box">
+            <div class="modal-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"></path><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+            </div>
+            <div class="modal-title">ลบประวัติการทำงาน?</div>
+            <div class="modal-desc">ข้อมูลของวันที่ <strong id="deleteDateText" style="color:var(--text-heading);"></strong> จะถูกลบถาวรและไม่สามารถกู้คืนได้</div>
+            <div class="modal-actions">
+                <button class="modal-btn btn-modal-cancel" onclick="closeModal()">ยกเลิก</button>
+                <button class="modal-btn btn-modal-delete" onclick="confirmDelete()">ลบข้อมูล</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="container" id="main-container">
+        <div id="page-entry" class="page active">
+            <div class="card">
+                <div class="card-header">
+                    <div class="form-title" id="form-title-text">บันทึกหัตถการ</div>
+                    <div class="badge">Today</div>
+                </div>
+                <div class="form-group">
+                    <label>ชื่อนักศึกษา</label>
+                    <select id="studentName" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border-color); background-color: var(--bg-card); color: var(--text-heading); font-size: 14px; margin-top: 8px; outline: none;">
+                        <option value="" disabled selected>-- โปรดเลือกชื่อของคุณ --</option>
+                        <option value="นางสาวธัญชนก เคนมา">นางสาวธัญชนก เคนมา</option>
+                        <option value="นายธนกฤต ศรียา">นายธนกฤต ศรียา</option>
+                        <option value="นางสาวชญาภา ป้องกัน">นางสาวชญาภา ป้องกัน</option>
+                        <option value="นางสาวกัญญาณัฐ เหาะเหิน">นางสาวกัญญาณัฐ เหาะเหิน</option>
+                        <option value="นางสาวกัญญาวีร์ แสงไกร">นางสาวกัญญาวีร์ แสงไกร</option>
+                        <option value="นางสาวกิตติญากรณ์ ธนาวัฒนกุล">นางสาวกิตติญากรณ์ ธนาวัฒนกุล</option>
+                        <option value="นางสาวกุลธิดา วงภูธร">นางสาวกุลธิดา วงภูธร</option>
+                        <option value="นางสาวเกสรา ดวงศรี">นางสาวเกสรา ดวงศรี</option>
+                        <option value="นางสาวจิรนันณ์ ขันบรรจง">นางสาวจิรนันณ์ ขันบรรจง</option>
+                        <option value="นางสาวจุฑารัตน์ พันธะไชย">นางสาวจุฑารัตน์ พันธะไชย</option>
+                        <option value="นางสาวจุฑารัตน์ แสงฤทธิ์">นางสาวจุฑารัตน์ แสงฤทธิ์</option>
+                        <option value="นางสาวชนกนันท์ ชูมะโนวัด">นางสาวชนกนันท์ ชูมะโนวัด</option>
+                        <option value="นางสาวชนันภรณ์ สกุลเดช">นางสาวชนันภรณ์ สกุลเดช</option>
+                        <option value="นางสาวชลนิชา อินทชัย">นางสาวชลนิชา อินทชัย</option>
+                        <option value="นางสาวชาลิสา วิจิตรปัญญา">นางสาวชาลิสา วิจิตรปัญญา</option>
+                        <option value="นางสาวชุติมา ลาลู่">นางสาวชุติมา ลาลู่</option>
+                        <option value="นางสาวฑิติยาภรณ์ สังสนา">นางสาวฑิติยาภรณ์ สังสนา</option>
+                        <option value="นายณัฐนิชา พาสูงเนิน">นายณัฐนิชา พาสูงเนิน</option>
+                        <option value="นางสาวณัฐรุจา ธวะบุรี">นางสาวณัฐรุจา ธวะบุรี</option>
+                        <option value="นางสาวดุษิตา ศรีภูวงศ์">นางสาวดุษิตา ศรีภูวงศ์</option>
+                        <option value="นายเตชินทร์ มายอด">นายเตชินทร์ มายอด</option>
+                        <option value="นายธนกร อิ่มจำรัส">นายธนกร อิ่มจำรัส</option>
+                        <option value="นางสาวธัญลักษ์ มุลทากุล">นางสาวธัญลักษ์ มุลทากุล</option>
+                        <option value="นางสาวธันวารัตน์ ทั่วจบ">นางสาวธันวารัตน์ ทั่วจบ</option>
+                        <option value="นางสาวธิดารัตน์ แสงสี">นางสาวธิดารัตน์ แสงสี</option>
+                        <option value="นางสาวนันทภัค อรุณเรื่อ">นางสาวนันทภัค อรุณเรื่อ</option>
+                        <option value="นางสาวนันทิพัฒน์ ทองสวัสดิ์">นางสาวนันทิพัฒน์ ทองสวัสดิ์</option>
+                        <option value="นางสาวน้ำทิพย์ ทองมี">นางสาวน้ำทิพย์ ทองมี</option>
+                        <option value="นางสาวน้ำเพชร อนุภาพ">นางสาวน้ำเพชร อนุภาพ</option>
+                        <option value="นางสาวนิติพร อินทร์ชัย">นางสาวนิติพร อินทร์ชัย</option>
+                        <option value="นางสาวนิสรา ยุ่งพรมมา">นางสาวนิสรา ยุ่งพรมมา</option>
+                        <option value="นางสาวปภาดา ขันทีท้าว">นางสาวปภาดา ขันทีท้าว</option>
+                        <option value="นายปรัตถกร พิลาลี">นายปรัตถกร พิลาลี</option>
+                        <option value="นางสาวปัญนันท์ภัชญ์ แสนประดิษฐ์">นางสาวปัญนันท์ภัชญ์ แสนประดิษฐ์</option>
+                        <option value="นางสาวปิยธิดา หงษ์ทอง">นางสาวปิยธิดา หงษ์ทอง</option>
+                        <option value="นางสาวปิยวดี มีวิชา">นางสาวปิยวดี มีวิชา</option>
+                        <option value="นางสาวปิยะกุล โพธาศรี">นางสาวปิยะกุล โพธาศรี</option>
+                        <option value="นางสาวพลอยชนก วัชรจิราโรจน์">นางสาวพลอยชนก วัชรจิราโรจน์</option>
+                        <option value="นางสาวพัชรนันท์ อดทน">นางสาวพัชรนันท์ อดทน</option>
+                        <option value="นายพีรวิชญ์ เทียงคำ">นายพีรวิชญ์ เทียงคำ</option>
+                        <option value="นางสาวภัสพร อุ่นเมือง">นางสาวภัสพร อุ่นเมือง</option>
+                        <option value="นางสาวมลตกาล คำวงศ์">นางสาวมลตกาล คำวงศ์</option>
+                        <option value="นางสาวเมธาพร สุขิตวงศ์">นางสาวเมธาพร สุขิตวงศ์</option>
+                        <option value="นางสาวรัตนาพร รัตนวิเศษ">นางสาวรัตนาพร รัตนวิเศษ</option>
+                        <option value="นางสาววรัญญา จันทร์อุทัย">นางสาววรัญญา จันทร์อุทัย</option>
+                        <option value="นางสาววริศรา คณารัตน์">นางสาววริศรา คณารัตน์</option>
+                        <option value="นางสาววาสนา ทานกระโทก">นางสาววาสนา ทานกระโทก</option>
+                        <option value="นางสาววาสิษฐี ศรีสุข">นางสาววาสิษฐี ศรีสุข</option>
+                        <option value="นางสาววิภาวดี วงษ์อินจันทร์">นางสาววิภาวดี วงษ์อินจันทร์</option>
+                        <option value="นางสาวศิริลักษณ์ แแซงดานุช">นางสาวศิริลักษณ์ แแซงดานุช</option>
+                        <option value="นางสาวสิริกัลยา ศรภูมิ">นางสาวสิริกัลยา ศรภูมิ</option>
+                        <option value="นางสาวสิรินพร สมัครสมาน">นางสาวสิรินพร สมัครสมาน</option>
+                        <option value="นางสาวสุภชา เกียววงศ์">นางสาวสุภชา เกียววงศ์</option>
+                        <option value="นางสาวอภิชญา วงค์นารี">นางสาวอภิชญา วงค์นารี</option>
+                        <option value="นางสาวอรปรียา ปิยะราช">นางสาวอรปรียา ปิยะราช</option>
+                        <option value="นางสาวอรปรียา สิงห์สุด">นางสาวอรปรียา สิงห์สุด</option>
+                        <option value="นางสาวอรรณพร สิงห์คำป้อง">นางสาวอรรณพร สิงห์คำป้อง</option>
+                        <option value="นางสาวอรุโณทัย โพสาวัง">นางสาวอรุโณทัย โพสาวัง</option>
+                        <option value="นางสาวอลิชา บุญจิราวัฒน์">นางสาวอลิชา บุญจิราวัฒน์</option>
+                        <option value="นางสาวอาทิตยา ดีมา">นางสาวอาทิตยา ดีมา</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>วันที่ปฏิบัติงาน</label>
+                    <input type="date" id="dateInput">
+                </div>
+                
+                <label style="font-weight: 500; color: var(--text-body); font-size: 13px; margin-bottom: 8px; display: block; margin-top: 24px;">จำนวนที่ทำได้ (เคส)</label>
+                <div class="input-grid" id="input-container">
+                    </div>
+
+                <button class="btn-save" id="saveBtn" onclick="saveRecord()">บันทึกข้อมูลเข้าสู่ระบบ</button>
+                <button class="btn-cancel" id="cancelEditBtn" onclick="cancelEdit()">ยกเลิกการแก้ไข</button>
+            </div>
+        </div>
+
+        <div id="page-history" class="page">
+            <div class="card" style="padding-left: 14px; padding-right: 14px;">
+                <div class="card-header" style="padding: 0 10px;">
+                    <div class="form-title">ประวัติการทำงาน</div>
+                </div>
+                <div class="table-wrapper">
+                    <table class="spreadsheet">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Comp.</th>
+				<th>Screen.</th>
+				<th>Emer.</th>
+                                <th>X-ray</th>
+                                <th>Cl I</th>
+                                <th>Cl II</th>
+                                <th>Cl III/IV</th>
+                                <th>Cl V</th>
+                                <th>Scale</th>
+                                <th>Seal</th>
+                                <th>Flu</th>
+                                <th>OHI</th>
+                                <th>Caries</th>
+                                <th>Ext</th>
+                                <th>Other</th>
+                                <th>Manage</th>
+                            </tr>
+                        </thead>
+                        <tbody id="history-list">
+                            </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="page-summary" class="page">
+            <div class="card">
+                <div class="card-header">
+                    <div class="form-title">สรุปความก้าวหน้า</div>
+                </div>
+                <div id="summary-container">
+                    </div>
+                
+                <div class="total-card">
+                    <h3>Overall Progress</h3>
+                    <p class="total-number" id="total-done-text">0/0</p>
+                    <p class="total-sub" id="total-remain-text">เหลืออีก 0 งาน</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="bottom-nav">
+        <button class="nav-item active" id="nav-entry" onclick="showPage('entry', this)">
+            <svg class="nav-icon" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+            Record
+        </button>
+        <button class="nav-item" id="nav-history" onclick="showPage('history', this)">
+            <svg class="nav-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+            History
+        </button>
+        <button class="nav-item" id="nav-summary" onclick="showPage('summary', this)">
+            <svg class="nav-icon" viewBox="0 0 24 24"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"></path><path d="M22 12A10 10 0 0 0 12 2v10z"></path></svg>
+            Progress
         </button>
     </div>
 
-    <div class="card">
-        <table>
-            <thead>
-                <tr>
-                    <th>ชื่อนักศึกษา</th>
-                    <th>ยอด Requirement</th>
-                    <th>อัปเดตล่าสุด</th>
-                    <th>ดูเพิ่มเติม</th>
-                </tr>
-            </thead>
-            <tbody id="dashboard-body">
-                <tr>
-                    <td colspan="4" class="loading-state">กำลังดึงข้อมูลจาก Cloud...</td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
-
-    <div class="modal-overlay" id="detailModal">
-        <div class="modal-box">
-            <div class="modal-header">
-                <div class="modal-title" id="modal-student-name">ชื่อนักศึกษา</div>
-                <button class="btn-close" onclick="closeModal()">&times;</button>
-            </div>
-            <div class="detail-grid" id="modal-details-grid">
-                </div>
-        </div>
-    </div>
-
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-
+    <script>
+        // --- ส่วนของการเชื่อมต่อ Firebase ของคุณหมอ ---
         const firebaseConfig = {
             apiKey: "AIzaSyC0f7Es0GBGjCbjRJD4drO8urAGdRvSMX4",
             authDomain: "dental-tracker-db.firebaseapp.com",
             projectId: "dental-tracker-db",
             storageBucket: "dental-tracker-db.firebasestorage.app",
             messagingSenderId: "696925089677",
-            appId: "1:696925089677:web:f8b661f17f438a075597c4"
+            appId: "1:696925089677:web:f8b661f17f438a075597c4",
+            measurementId: "G-JPVQBX87WZ"
         };
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        // ---------------------------------------------
 
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
+        // --- จดจำชื่อนักศึกษาในเครื่อง ---
+        const nameSelect = document.getElementById('studentName');
+        const savedName = localStorage.getItem('dental_student_name');
+        if (savedName) {
+            nameSelect.value = savedName;
+        }
+        nameSelect.addEventListener('change', function() {
+            localStorage.setItem('dental_student_name', this.value);
+        });
+        // -----------------------------
 
-        // ตัวแปรสำหรับเก็บข้อมูลนักศึกษาทั้งหมดไว้ในหน่วยความจำ เพื่อไว้เปิดดูใน Modal
-        window.studentDataMap = {};
-
-        const categories = [
-            { id: 'complete', name: 'Complete Chart' },
-            { id: 'xray', name: 'X-ray' },
-            { id: 'class1', name: 'Class I / PRR' },
-            { id: 'class2', name: 'Class II' },
-            { id: 'class3', name: 'Class III/IV' },
-            { id: 'class5', name: 'Class V' },
-            { id: 'scaling', name: 'Scaling' },
-            { id: 'sealant', name: 'Sealant' },
-            { id: 'fluoride', name: 'Fluoride' },
-            { id: 'ohi', name: 'OHI' },
-            { id: 'caries', name: 'Caries Risk' },
-            { id: 'extract', name: 'Extraction' },
-            { id: 'other', name: 'Others' }
-        ];
-
-        async function loadAllData() {
-            const tbody = document.getElementById('dashboard-body');
-            tbody.innerHTML = '<tr><td colspan="4" class="loading-state">กำลังโหลดข้อมูล...</td></tr>';
-
-            try {
-                const querySnapshot = await getDocs(collection(db, "dental_cases"));
-                if (querySnapshot.empty) {
-                    tbody.innerHTML = '<tr><td colspan="4" class="loading-state">ยังไม่มีข้อมูลนักศึกษาส่งเข้ามา</td></tr>';
-                    return;
-                }
-
-                tbody.innerHTML = '';
-                window.studentDataMap = {}; // รีเซ็ตข้อมูลเก่า
-
-                querySnapshot.forEach((doc) => {
-                    const data = doc.data();
-                    const c = data.cases || {};
-                    const lastDate = data.lastUpdate ? new Date(data.lastUpdate).toLocaleString('th-TH') : '-';
-                    
-                    // คำนวณยอดรวมทั้งหมด (Total R)
-                    let totalR = Object.values(c).reduce((sum, val) => sum + (Number(val) || 0), 0);
-
-                    // เก็บข้อมูลเข้าหน่วยความจำเพื่อใช้เปิด Modal
-                    window.studentDataMap[data.studentName] = c;
-
-                    tbody.innerHTML += `
-                        <tr>
-                            <td class="student-name">${data.studentName}</td>
-                            <td class="total-r">${totalR} Requirement</td>
-                            <td class="last-update">${lastDate}</td>
-                            <td><button class="btn-detail" onclick="openModal('${data.studentName}')">ดูเพิ่มเติม</button></td>
-                        </tr>
-                    `;
-                });
-            } catch (e) {
-                console.error("Error loading data: ", e);
-                tbody.innerHTML = '<tr><td colspan="4" class="loading-state">เกิดข้อผิดพลาดในการเชื่อมต่อฐานข้อมูล</td></tr>';
+        function updateThemeIcon(isDark) {
+            const btn = document.getElementById('theme-toggle');
+            if(isDark) {
+                btn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>`;
+            } else {
+                btn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>`;
             }
         }
 
-        window.openModal = function(studentName) {
-            const data = window.studentDataMap[studentName];
-            if(!data) return;
+        function toggleTheme() {
+            const isDark = document.body.classList.toggle('dark-theme');
+            localStorage.setItem('dental_theme', isDark ? 'dark' : 'light');
+            updateThemeIcon(isDark);
+        }
 
-            document.getElementById('modal-student-name').innerText = "รายละเอียด: " + studentName;
+        // Initialize Theme on load
+        const savedTheme = localStorage.getItem('dental_theme');
+        if (savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.body.classList.add('dark-theme');
+            updateThemeIcon(true);
+        } else {
+            updateThemeIcon(false);
+        }
+
+        const categories = [
+            { id: 'complete', name: 'Complete Chart', target: 3 },
+            { id: 'screen', name: 'Screen Chart', target: 0.5 },
+            { id: 'emergency', name: 'Emergency Chart', target: 0.5 },
+            { id: 'xray', name: 'X-ray', target: 0 },
+            { id: 'class1', name: 'Class I / PRR', target: 2 },
+            { id: 'class2', name: 'Class II', target: 4 },
+            { id: 'class3', name: 'Class III/IV', target: 2 },
+            { id: 'class5', name: 'Class V', target: 2 },
+            { id: 'scaling', name: 'Scaling', target: 10 },
+            { id: 'sealant', name: 'Sealant', target: 4 },
+            { id: 'fluoride', name: 'Fluoride', target: 1 },
+            { id: 'ohi', name: 'OHI', target: 2 },
+            { id: 'caries', name: 'caries risk assessment', target: 0 },
+            { id: 'extract', name: 'Extraction', target: 3 },
+            { id: 'other', name: 'Others', target: 1 }
+        ];
+
+        let editModeDate = null; 
+        let dateToDelete = null; 
+
+        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        document.getElementById('current-date-display').innerText = new Date().toLocaleDateString('th-TH', options);
+
+        const container = document.getElementById('input-container');
+        categories.forEach(cat => {
+            container.innerHTML += `
+                <div class="input-item">
+                    <label>${cat.name}</label>
+                    <input type="number" id="input-${cat.id}" placeholder="0" min="0" step="any">
+                </div>
+            `;
+        });
+
+        document.getElementById('dateInput').valueAsDate = new Date();
+
+        function showPage(pageId, btn) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+            document.getElementById('page-' + pageId).classList.add('active');
+            btn.classList.add('active');
+
+            document.getElementById('main-container').style.maxWidth = pageId === 'history' ? '100%' : '600px';
+
+            if(pageId === 'history') renderHistory();
+            if(pageId === 'summary') renderSummary();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // --- ฟังก์ชันเสริม: อัปเดตยอดรวมทั้งหมดขึ้น Firebase แบบเนียนๆ ---
+        function syncToFirebase() {
+            const student = document.getElementById('studentName').value;
+            if (!student) return; // ถ้าไม่ได้เลือกชื่อก็ข้ามไปก่อน
+
+            let records = JSON.parse(localStorage.getItem('dental_logs')) || [];
+            let syncTotals = {};
+            categories.forEach(cat => syncTotals[cat.id] = 0);
             
-            const grid = document.getElementById('modal-details-grid');
-            grid.innerHTML = '';
+            // คำนวณยอดรวมทั้งหมดจาก History ในเครื่อง
+            records.forEach(log => {
+                categories.forEach(cat => syncTotals[cat.id] += (log.data[cat.id] || 0));
+            });
+
+            // ยิงยอดรวมนี้ขึ้นไปทับบน Firestore ของนักศึกษาคนนั้น
+            db.collection("dental_cases").doc(student).set({
+                studentName: student,
+                lastUpdate: new Date().toISOString(),
+                cases: syncTotals
+            }, { merge: true })
+            .then(() => console.log("ซิงค์ยอดรวมไปที่ Dashboard สำเร็จ!"))
+            .catch(err => console.error("เกิดข้อผิดพลาดในการซิงค์ข้อมูล:", err));
+        }
+        // --------------------------------------------------------
+
+        function saveRecord() {
+            const student = document.getElementById('studentName').value;
+            if(!student) {
+                showToast("กรุณาเลือกชื่อนักศึกษาก่อนบันทึก");
+                return;
+            }
+
+            const date = document.getElementById('dateInput').value;
+            if(!date) return;
+
+            let records = JSON.parse(localStorage.getItem('dental_logs')) || [];
+            let currentData = {};
+            
+            categories.forEach(cat => {
+                currentData[cat.id] = parseFloat(document.getElementById('input-' + cat.id).value) || 0;
+            });
+
+            let existingEntryIndex = records.findIndex(r => r.date === date);
+
+            if (editModeDate) {
+                records[existingEntryIndex].data = currentData;
+            } else {
+                if (existingEntryIndex >= 0) {
+                    categories.forEach(cat => {
+                        records[existingEntryIndex].data[cat.id] = (records[existingEntryIndex].data[cat.id] || 0) + currentData[cat.id];
+                    });
+                } else {
+                    records.push({ date: date, data: currentData });
+                }
+            }
+
+            localStorage.setItem('dental_logs', JSON.stringify(records));
+            
+            syncToFirebase(); // ซิงค์ยอดใหม่ขึ้น Dashboard ทันทีที่กดเซฟ!
+
+            showToast(editModeDate ? "อัปเดตข้อมูลสำเร็จ" : "บันทึกข้อมูลสำเร็จ");
+            cancelEdit();
+        }
+
+        function editLog(date) {
+            let records = JSON.parse(localStorage.getItem('dental_logs')) || [];
+            let record = records.find(r => r.date === date);
+            if(!record) return;
+
+            document.getElementById('dateInput').value = record.date;
+            document.getElementById('dateInput').disabled = true; 
+            
+            categories.forEach(cat => {
+                document.getElementById('input-' + cat.id).value = record.data[cat.id] || '';
+            });
+
+            editModeDate = record.date;
+            document.getElementById('form-title-text').innerHTML = `แก้ไขข้อมูล`;
+            document.querySelector('.badge').innerText = record.date;
+            document.querySelector('.badge').style.background = "rgba(245, 158, 11, 0.2)";
+            document.querySelector('.badge').style.color = "#F59E0B";
+            
+            document.getElementById('saveBtn').innerHTML = "ยืนยันการอัปเดต";
+            document.getElementById('saveBtn').style.background = "var(--brand-primary)";
+            document.getElementById('saveBtn').style.color = "#FFF";
+            document.getElementById('cancelEditBtn').style.display = "block";
+
+            showPage('entry', document.getElementById('nav-entry'));
+        }
+
+        function cancelEdit() {
+            editModeDate = null;
+            document.getElementById('dateInput').disabled = false;
+            document.getElementById('dateInput').valueAsDate = new Date();
+            
+            categories.forEach(cat => document.getElementById('input-' + cat.id).value = '');
+            
+            document.getElementById('form-title-text').innerHTML = "บันทึกหัตถการ";
+            document.querySelector('.badge').innerText = "Today";
+            document.querySelector('.badge').style.background = "var(--brand-light)";
+            document.querySelector('.badge').style.color = "var(--brand-primary)";
+
+            document.getElementById('saveBtn').innerHTML = "บันทึกข้อมูลเข้าสู่ระบบ";
+            document.getElementById('saveBtn').style.background = "var(--text-heading)";
+            document.getElementById('saveBtn').style.color = "var(--bg-card)";
+            document.getElementById('cancelEditBtn').style.display = "none";
+        }
+
+        function openDeleteModal(date) {
+            dateToDelete = date;
+            document.getElementById('deleteDateText').innerText = date;
+            document.getElementById('deleteModal').classList.add('show');
+        }
+
+        function closeModal() {
+            dateToDelete = null;
+            document.getElementById('deleteModal').classList.remove('show');
+        }
+
+        function confirmDelete() {
+            if (dateToDelete) {
+                let records = JSON.parse(localStorage.getItem('dental_logs')) || [];
+                records = records.filter(r => r.date !== dateToDelete);
+                localStorage.setItem('dental_logs', JSON.stringify(records));
+                
+                syncToFirebase(); // ซิงค์ยอดที่ถูกลบไปอัปเดตให้ Dashboard ด้วย
+
+                renderHistory();
+                showToast("ลบข้อมูลสำเร็จ");
+            }
+            closeModal();
+        }
+
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-msg').innerText = message;
+            toast.classList.add('show');
+            setTimeout(() => { toast.classList.remove('show'); }, 3000);
+        }
+
+        function renderHistory() {
+            const list = document.getElementById('history-list');
+            const logs = JSON.parse(localStorage.getItem('dental_logs')) || [];
+            list.innerHTML = '';
+            
+            if(logs.length === 0) {
+                list.innerHTML = `<tr><td colspan="15" style="padding: 60px 0; color: var(--text-muted); font-size: 14px;">ยังไม่มีประวัติการทำงาน</td></tr>`;
+                return;
+            }
+
+            logs.sort((a,b) => new Date(b.date) - new Date(a.date)).forEach(log => {
+                let cells = `<td><span style="font-size:12px; font-weight:600;">${log.date.substring(5)}</span></td>`;
+                
+                categories.forEach(cat => {
+                    let val = log.data[cat.id];
+                    let color = val ? 'var(--text-heading)' : 'var(--text-muted)';
+                    let weight = val ? '600' : '300';
+                    cells += `<td style="color:${color}; font-weight:${weight}; opacity:${val ? '1' : '0.5'};">${val || '-'}</td>`;
+                });
+
+                cells += `
+                    <td>
+                        <div class="action-cell">
+                            <button class="action-btn" onclick="editLog('${log.date}')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg></button>
+                            <button class="action-btn delete" onclick="openDeleteModal('${log.date}')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button>
+                        </div>
+                    </td>
+                `;
+                list.innerHTML += `<tr>${cells}</tr>`;
+            });
+        }
+
+        function renderSummary() {
+            const container = document.getElementById('summary-container');
+            const logs = JSON.parse(localStorage.getItem('dental_logs')) || [];
+            container.innerHTML = '';
+
+            let totals = {};
+            let grandTotalDone = 0;
+            let grandTotalTarget = 0;
+
+            categories.forEach(cat => totals[cat.id] = 0);
+            logs.forEach(log => {
+                categories.forEach(cat => totals[cat.id] += log.data[cat.id] || 0);
+            });
 
             categories.forEach(cat => {
-                const value = data[cat.id] || 0;
-                // เน้นสีเขียวถ้ามีงาน, สีเทาถ้าเป็น 0
-                const colorStyle = value > 0 ? 'color: var(--brand-primary);' : 'color: var(--text-body); opacity: 0.5;';
+                const done = totals[cat.id];
+                const percent = cat.target === 0 ? (done > 0 ? 100 : 0) : Math.min(100, (done / cat.target) * 100);
                 
-                grid.innerHTML += `
-                    <div class="detail-item">
-                        <span class="detail-label">${cat.name}</span>
-                        <span class="detail-value" style="${colorStyle}">${value}</span>
+                grandTotalDone += done;
+                grandTotalTarget += cat.target;
+
+                let statusClass = percent >= 100 ? 'completed' : '';
+                
+                container.innerHTML += `
+                    <div class="summary-item ${statusClass}">
+                        <div class="summary-label">
+                            <div class="title">${cat.name}</div>
+                            <div class="stats"><span>${done}</span> / ${cat.target === 0 ? '∞' : cat.target}</div>
+                        </div>
+                        <div class="progress-container">
+                            <div class="progress-bar" style="width: 0%;" data-width="${percent}%"></div>
+                        </div>
                     </div>
                 `;
             });
 
-            document.getElementById('detailModal').classList.add('show');
-        }
+            setTimeout(() => {
+                document.querySelectorAll('.progress-bar').forEach(bar => {
+                    bar.style.width = bar.getAttribute('data-width');
+                });
+            }, 50);
 
-        window.closeModal = function() {
-            document.getElementById('detailModal').classList.remove('show');
-        }
-
-        // ปิด Modal เมื่อคลิกพื้นที่ว่างด้านนอก
-        window.onclick = function(event) {
-            const modal = document.getElementById('detailModal');
-            if (event.target === modal) {
-                closeModal();
+            document.getElementById('total-done-text').innerText = `${grandTotalDone}/${grandTotalTarget}`;
+            
+            let totalRemain = Math.max(0, grandTotalTarget - grandTotalDone);
+            
+            if(totalRemain === 0 && grandTotalTarget > 0) {
+                document.getElementById('total-remain-text').innerText = "คุณทำเป้าหมายครบถ้วนแล้ว! 🎉";
+                triggerConfetti();
+            } else {
+                document.getElementById('total-remain-text').innerText = `เหลืออีก ${totalRemain} Requirement ที่ต้องเก็บ`;
             }
         }
 
-        loadAllData();
-        window.loadAllData = loadAllData;
+        function triggerConfetti() {
+            if (typeof confetti !== 'function') return; 
+
+            var duration = 3 * 1000;
+            var animationEnd = Date.now() + duration;
+            var defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 4000 };
+
+            function randomInRange(min, max) {
+                return Math.random() * (max - min) + min;
+            }
+
+            var interval = setInterval(function() {
+                var timeLeft = animationEnd - Date.now();
+
+                if (timeLeft <= 0) {
+                    return clearInterval(interval);
+                }
+
+                var particleCount = 50 * (timeLeft / duration);
+                
+                confetti(Object.assign({}, defaults, { 
+                    particleCount,
+                    origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 },
+                    colors: ['#2DD4BF', '#F59E0B', '#FFFFFF']
+                }));
+                
+                confetti(Object.assign({}, defaults, { 
+                    particleCount,
+                    origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 },
+                    colors: ['#2DD4BF', '#F59E0B', '#FFFFFF']
+                }));
+            }, 250);
+        }
+
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(reg => console.log('Service Worker Registered!', reg))
+                    .catch(err => console.error('Service Worker Registration Failed!', err));
+            });
+        }
     </script>
 </body>
 </html>
